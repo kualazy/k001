@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PokéTeam Builder — ข้อมูลโปเกมอน จัดทีม 1v1 & 2v2</title>
+  <meta name="description" content="เว็บไซต์ข้อมูลโปเกมอน จัดทีมแบตเทิล 1v1 และ 2v2 พร้อมข้อมูลความสามารถ ท่า และตารางแพ้ทาง" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body>
+  <!-- Animated Background Particles -->
+  <div class="bg-particles" id="bgParticles"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-logo">
+        <div class="logo-pokeball">
+          <div class="pokeball-top"></div>
+          <div class="pokeball-center"></div>
+          <div class="pokeball-bottom"></div>
+        </div>
+        <span class="logo-text">Poké<span class="logo-accent">Team</span></span>
+      </a>
+      <div class="nav-links">
+        <a href="#pokedex" class="nav-link active" data-section="pokedex">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="22"/></svg>
+          Pokédex
+        </a>
+        <a href="#team-builder" class="nav-link" data-section="team-builder">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          จัดทีม
+        </a>
+        <a href="#type-chart" class="nav-link" data-section="type-chart">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
+          ตารางแพ้ทาง
+        </a>
+      </div>
+      <button class="nav-mobile-toggle" id="mobileToggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Navigation -->
+  <div class="mobile-nav" id="mobileNav">
+    <a href="#pokedex" class="mobile-nav-link" data-section="pokedex">Pokédex</a>
+    <a href="#team-builder" class="mobile-nav-link" data-section="team-builder">จัดทีม</a>
+    <a href="#type-chart" class="mobile-nav-link" data-section="type-chart">ตารางแพ้ทาง</a>
+  </div>
+
+  <!-- Hero Section -->
+  <header class="hero" id="hero">
+    <div class="hero-content">
+      <div class="hero-badge">⚡ Pokémon Team Builder</div>
+      <h1 class="hero-title">
+        สร้างทีมโปเกมอน<br/>
+        <span class="hero-gradient">สุดแกร่ง</span>
+      </h1>
+      <p class="hero-subtitle">ค้นหาข้อมูลโปเกมอน จัดทีม 1v1 & 2v2 วิเคราะห์จุดแข็ง-จุดอ่อน และชนะทุกแบตเทิล!</p>
+      <div class="hero-actions">
+        <a href="#pokedex" class="btn btn-primary btn-glow">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          ค้นหาโปเกมอน
+        </a>
+        <a href="#team-builder" class="btn btn-secondary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          เริ่มจัดทีม
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="hero-stat-number" id="totalPokemon">0</span>
+          <span class="hero-stat-label">โปเกมอน</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-number">18</span>
+          <span class="hero-stat-label">ประเภท</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-number">2</span>
+          <span class="hero-stat-label">โหมดแบตเทิล</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-pokeball-bg"></div>
+    </div>
+  </header>
+
+  <!-- Pokédex Section -->
+  <section class="section" id="pokedex">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">📖 Database</span>
+        <h2 class="section-title">Pokédex</h2>
+        <p class="section-subtitle">ค้นหาและดูข้อมูลโปเกมอนทุกตัว พร้อมความสามารถ ท่าที่ใช้ และสเตตัส</p>
+      </div>
+
+      <!-- Search & Filter Bar -->
+      <div class="search-bar">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาชื่อโปเกมอน..." autocomplete="off" />
+          <button class="search-clear" id="searchClear" aria-label="Clear search">&times;</button>
+        </div>
+        <div class="filter-group">
+          <select id="typeFilter" class="filter-select">
+            <option value="">ทุกประเภท</option>
+          </select>
+          <select id="genFilter" class="filter-select">
+            <option value="">ทุก Gen</option>
+            <option value="1">Gen 1</option>
+            <option value="2">Gen 2</option>
+            <option value="3">Gen 3</option>
+            <option value="4">Gen 4</option>
+            <option value="5">Gen 5</option>
+            <option value="6">Gen 6</option>
+            <option value="7">Gen 7</option>
+            <option value="8">Gen 8</option>
+            <option value="9">Gen 9</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Pokemon Grid -->
+      <div class="pokemon-grid" id="pokemonGrid">
+        <div class="loading-container" id="loadingContainer">
+          <div class="pokeball-spinner">
+            <div class="pokeball-spin-top"></div>
+            <div class="pokeball-spin-center"></div>
+            <div class="pokeball-spin-bottom"></div>
+          </div>
+          <p class="loading-text">กำลังโหลดข้อมูลโปเกมอน...</p>
+        </div>
+      </div>
+
+      <!-- Load More -->
+      <div class="load-more-container" id="loadMoreContainer" style="display:none;">
+        <button class="btn btn-primary btn-load-more" id="loadMoreBtn">โหลดเพิ่มเติม</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Team Builder Section -->
+  <section class="section section-alt" id="team-builder">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">⚔️ Battle</span>
+        <h2 class="section-title">จัดทีมแบตเทิล</h2>
+        <p class="section-subtitle">เลือกโหมด 1v1 หรือ 2v2 แล้วสร้างทีมที่แข็งแกร่งที่สุด</p>
+      </div>
+
+      <!-- Mode Selector -->
+      <div class="mode-selector">
+        <button class="mode-btn active" data-mode="1v1" id="mode1v1">
+          <span class="mode-icon">⚡</span>
+          <span class="mode-label">1 vs 1</span>
+          <span class="mode-desc">แบตเทิลตัวต่อตัว</span>
+        </button>
+        <button class="mode-btn" data-mode="2v2" id="mode2v2">
+          <span class="mode-icon">🔥</span>
+          <span class="mode-label">2 vs 2</span>
+          <span class="mode-desc">แบตเทิลคู่</span>
+        </button>
+      </div>
+
+      <!-- Team Slots -->
+      <div class="team-builder-area">
+        <div class="team-panel team-panel-left">
+          <h3 class="team-panel-title">
+            <span class="team-color-dot team-dot-blue"></span>
+            ทีม A
+          </h3>
+          <div class="team-slots" id="teamASlots">
+            <div class="team-slot empty" data-team="A" data-slot="0" onclick="openTeamPicker('A', 0)">
+              <div class="slot-add-icon">+</div>
+              <span class="slot-label">เลือกโปเกมอน</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="vs-divider">
+          <span class="vs-text">VS</span>
+          <div class="vs-lightning">⚡</div>
+        </div>
+
+        <div class="team-panel team-panel-right">
+          <h3 class="team-panel-title">
+            <span class="team-color-dot team-dot-red"></span>
+            ทีม B
+          </h3>
+          <div class="team-slots" id="teamBSlots">
+            <div class="team-slot empty" data-team="B" data-slot="0" onclick="openTeamPicker('B', 0)">
+              <div class="slot-add-icon">+</div>
+              <span class="slot-label">เลือกโปเกมอน</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team Analysis -->
+      <div class="team-analysis" id="teamAnalysis" style="display:none;">
+        <h3 class="analysis-title">📊 วิเคราะห์ทีม</h3>
+        <div class="analysis-grid">
+          <div class="analysis-card" id="analysisTeamA">
+            <h4>ทีม A — จุดแข็ง/จุดอ่อน</h4>
+            <div class="analysis-content" id="analysisContentA"></div>
+          </div>
+          <div class="analysis-card" id="analysisTeamB">
+            <h4>ทีม B — จุดแข็ง/จุดอ่อน</h4>
+            <div class="analysis-content" id="analysisContentB"></div>
+          </div>
+          <div class="analysis-card analysis-card-wide" id="analysisPrediction">
+            <h4>🏆 ผลการวิเคราะห์</h4>
+            <div class="analysis-content" id="predictionContent"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Type Chart Section -->
+  <section class="section" id="type-chart">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">🛡️ Defense</span>
+        <h2 class="section-title">ตารางความได้เปรียบ/เสียเปรียบประเภท</h2>
+        <p class="section-subtitle">ดูว่าประเภทไหนแพ้ทางหรือได้เปรียบประเภทใด เพื่อวางแผนแบตเทิล</p>
+      </div>
+      <div class="type-chart-legend">
+        <div class="legend-item"><span class="legend-box legend-super"></span> ได้เปรียบ (2×)</div>
+        <div class="legend-item"><span class="legend-box legend-not"></span> เสียเปรียบ (½×)</div>
+        <div class="legend-item"><span class="legend-box legend-immune"></span> ไม่มีผล (0×)</div>
+        <div class="legend-item"><span class="legend-box legend-neutral"></span> ปกติ (1×)</div>
+      </div>
+      <div class="type-chart-wrapper">
+        <table class="type-chart-table" id="typeChartTable">
+          <thead id="typeChartHead"></thead>
+          <tbody id="typeChartBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pokemon Detail Modal -->
+  <div class="modal-overlay" id="pokemonModal">
+    <div class="modal-content">
+      <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+      <div class="modal-body" id="modalBody">
+        <!-- Dynamic content -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Picker Modal -->
+  <div class="modal-overlay" id="teamPickerModal">
+    <div class="modal-content modal-picker">
+      <button class="modal-close" id="pickerClose" aria-label="Close">&times;</button>
+      <h3 class="picker-title">เลือกโปเกมอน</h3>
+      <div class="picker-search">
+        <input type="text" id="pickerSearch" class="search-input" placeholder="ค้นหาชื่อโปเกมอน..." autocomplete="off" />
+      </div>
+      <div class="picker-grid" id="pickerGrid"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-logo">
+          <span class="logo-text">Poké<span class="logo-accent">Team</span></span>
+          <p class="footer-desc">เว็บไซต์ข้อมูลโปเกมอนและจัดทีมแบตเทิล</p>
+        </div>
+        <div class="footer-links">
+          <a href="#pokedex">Pokédex</a>
+          <a href="#team-builder">จัดทีม</a>
+          <a href="#type-chart">ตารางแพ้ทาง</a>
+        </div>
+        <p class="footer-credit">ข้อมูลจาก <a href="https://pokeapi.co" target="_blank" rel="noopener">PokéAPI</a> & <a href="https://pokebase.app/pokemon-champions" target="_blank" rel="noopener">PokéBase</a></p>
+        <p class="footer-copyright">Pokémon © Nintendo / Creatures Inc. / GAME FREAK Inc.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
