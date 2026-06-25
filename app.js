@@ -53,14 +53,18 @@ const TYPE_CHART = {
 
 // ============ STATE ============
 let allPokemon = [];
+let allItems = [];
 let displayedPokemon = [];
+let displayedItems = [];
 let currentPage = 0;
+let itemsCurrentPage = 0;
 let totalLoaded = 0;
-let battleMode = '1v1'; // '1v1' or '2v2'
-let teamA = [];
-let teamB = [];
+let teamA = Array(6).fill(null);
+let teamB = Array(6).fill(null);
 let currentPickerTeam = null;
 let currentPickerSlot = null;
+let currentItemPickerTeam = null;
+let currentItemPickerSlot = null;
 let pokemonCache = {};
 
 // ============ DOM ELEMENTS ============
@@ -76,9 +80,14 @@ const $pokemonModal = document.getElementById('pokemonModal');
 const $modalBody = document.getElementById('modalBody');
 const $modalClose = document.getElementById('modalClose');
 const $teamPickerModal = document.getElementById('teamPickerModal');
+const $itemPickerModal = document.getElementById('itemPickerModal');
 const $pickerGrid = document.getElementById('pickerGrid');
 const $pickerSearch = document.getElementById('pickerSearch');
+const $itemPickerGrid = document.getElementById('itemPickerGrid');
+const $itemPickerSearch = document.getElementById('itemPickerSearch');
 const $pickerClose = document.getElementById('pickerClose');
+const $itemPickerClose = document.getElementById('itemPickerClose');
+const $itemLoadingContainer = document.getElementById('itemLoadingContainer');
 const $teamASlots = document.getElementById('teamASlots');
 const $teamBSlots = document.getElementById('teamBSlots');
 const $teamAnalysis = document.getElementById('teamAnalysis');
@@ -87,6 +96,23 @@ const $mobileToggle = document.getElementById('mobileToggle');
 const $mobileNav = document.getElementById('mobileNav');
 const $totalPokemon = document.getElementById('totalPokemon');
 
+// New DOM Elements
+const $itemsSearchInput = document.getElementById('itemsSearchInput');
+const $itemsGrid = document.getElementById('itemsGrid');
+const $itemsPrevBtn = document.getElementById('itemsPrevBtn');
+const $itemsNextBtn = document.getElementById('itemsNextBtn');
+const $itemsCurrentPage = document.getElementById('itemsCurrentPage');
+const $metaTierGrid = document.getElementById('metaTierGrid');
+const $calcAttacker = document.getElementById('calcAttacker');
+const $calcDefender = document.getElementById('calcDefender');
+const $calcMovePower = document.getElementById('calcMovePower');
+const $calcMoveType = document.getElementById('calcMoveType');
+const $btnCalculate = document.getElementById('btnCalculate');
+const $calcResult = document.getElementById('calcResult');
+const $calcResultText = document.getElementById('calcResultText');
+const $calcHpBar = document.getElementById('calcHpBar');
+const $speedTiersBody = document.getElementById('speedTiersBody');
+
 // ============ INITIALIZATION ============
 document.addEventListener('DOMContentLoaded', () => {
   initParticles();
@@ -94,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initTypeFilter();
   buildTypeChart();
   loadPokemonList();
+  loadItemList();
   initEventListeners();
   initTeamSlots();
 });
@@ -118,7 +145,6 @@ function initParticles() {
 
 // ============ NAVIGATION ============
 function initNavigation() {
-  // Scroll effect
   window.addEventListener('scroll', () => {
     $navbar.classList.toggle('scrolled', window.scrollY > 50);
   });
@@ -128,7 +154,41 @@ function initNavigation() {
     $mobileNav.classList.toggle('open');
   });
 
-  // Nav links - active state
+  const navLinks = document.querySelectorAll('.nav-item');
+  const sections = document.querySelectorAll('.section');
+  const mobileNavLinks = document.querySelectorAll('.mobile-nav .nav-item');
+
+  function switchSection(targetId) {
+    sections.forEach(sec => sec.style.display = 'none');
+    document.getElementById(targetId).style.display = 'block';
+
+    navLinks.forEach(link => {
+      link.classList.toggle('active', link.dataset.target === targetId);
+    });
+    mobileNavLinks.forEach(link => {
+      link.classList.toggle('active', link.dataset.target === targetId);
+    });
+    
+    // Auto-refresh calc and speed tiers when switching to them
+    if (targetId === 'damageCalc') populateDamageCalcDropdowns();
+    if (targetId === 'speedTiers') renderSpeedTiers();
+  }
+
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      switchSection(e.currentTarget.dataset.target);
+    });
+  });
+
+  mobileNavLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      switchSection(e.currentTarget.dataset.target);
+      $mobileNav.classList.remove('active');
+    });
+  });
+
   document.querySelectorAll('[data-section]').forEach(link => {
     link.addEventListener('click', (e) => {
       $mobileNav.classList.remove('open');
@@ -182,20 +242,26 @@ function initEventListeners() {
     if (e.target === $teamPickerModal) closeTeamPicker();
   });
 
+  $itemPickerClose.addEventListener('click', closeItemPicker);
+  $itemPickerModal.addEventListener('click', (e) => {
+    if (e.target === $itemPickerModal) closeItemPicker();
+  });
+
   // Picker search
   $pickerSearch.addEventListener('input', debounce(() => {
     renderPickerGrid($pickerSearch.value.toLowerCase());
   }, 200));
 
-  // Battle mode
-  document.getElementById('mode1v1').addEventListener('click', () => setBattleMode('1v1'));
-  document.getElementById('mode2v2').addEventListener('click', () => setBattleMode('2v2'));
+  $itemPickerSearch.addEventListener('input', debounce(() => {
+    renderItemPickerGrid($itemPickerSearch.value.toLowerCase());
+  }, 200));
 
   // Keyboard
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closePokemonModal();
       closeTeamPicker();
+      closeItemPicker();
     }
   });
 }
@@ -203,28 +269,46 @@ function initEventListeners() {
 // ============ LOAD POKEMON LIST ============
 async function loadPokemonList() {
   try {
-    // Load a larger batch at once
-    const res = await fetch(`${POKEAPI_BASE}/pokemon?limit=1025&offset=0`);
+    const res = await fetch(`${POKEAPI_BASE}/pokemon?limit=1300`);
     const data = await res.json();
-
-    allPokemon = data.results.map((p, i) => ({
-      id: i + 1,
-      name: p.name,
-      url: p.url
-    }));
-
-    $totalPokemon.textContent = allPokemon.length;
-    animateCounter($totalPokemon, allPokemon.length);
+    
+    // Filter out non-megas over 10000
+    allPokemon = data.results.map(p => {
+      const parts = p.url.split('/');
+      const id = parseInt(parts[parts.length - 2]);
+      return { id, name: p.name, url: p.url };
+    }).filter(p => {
+      if (p.id < 10000) return true; // Base pokemon
+      if (p.name.includes('-mega') || p.name.includes('-primal')) return true; // Megas and Primals
+      return false;
+    });
 
     filterAndDisplayPokemon();
-    $loadingContainer.style.display = 'none';
+    renderMetaTier(); // Render meta tier once we have list
   } catch (err) {
-    console.error('Error loading Pokemon list:', err);
+    console.error('Error loading pokemon list:', err);
     $loadingContainer.innerHTML = `
       <div class="no-results">
         <div class="no-results-icon">❌</div>
         <p class="no-results-text">ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง</p>
       </div>`;
+  }
+}
+
+async function loadItemList() {
+  try {
+    const res = await fetch(`${POKEAPI_BASE}/item?limit=2000`);
+    const data = await res.json();
+    allItems = data.results.map((item) => {
+      const urlParts = item.url.split('/');
+      const id = urlParts[urlParts.length - 2];
+      return { id, name: item.name };
+    });
+    
+    // Also initialize the Items List tab
+    filterAndDisplayItems();
+  } catch (err) {
+    console.error('Error loading item list:', err);
   }
 }
 
@@ -612,36 +696,44 @@ function buildTypeChart() {
 }
 
 // ============ TEAM BUILDER ============
-function setBattleMode(mode) {
-  battleMode = mode;
-  document.querySelectorAll('.mode-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.mode === mode);
-  });
-
-  // Reset teams
-  teamA = [];
-  teamB = [];
-  initTeamSlots();
-  $teamAnalysis.style.display = 'none';
-}
-
 function initTeamSlots() {
-  const slotCount = battleMode === '1v1' ? 1 : 2;
-
-  // Ensure arrays
-  teamA = teamA.slice(0, slotCount);
-  teamB = teamB.slice(0, slotCount);
-
-  renderTeamSlots('A', $teamASlots, teamA, slotCount);
-  renderTeamSlots('B', $teamBSlots, teamB, slotCount);
+  renderTeamSlots('A', $teamASlots, teamA);
+  renderTeamSlots('B', $teamBSlots, teamB);
+  // Re-run downstream updates
+  populateDamageCalcDropdowns();
+  renderSpeedTiers();
 }
 
-function renderTeamSlots(teamId, container, team, slotCount) {
+function renderTeamSlots(teamId, container, team) {
   let html = '';
-  for (let i = 0; i < slotCount; i++) {
+  for (let i = 0; i < 6; i++) {
     const pokemon = team[i];
     if (pokemon) {
       const imgUrl = `${POKEMON_IMG_BASE}${pokemon.id}.png`;
+      let itemHtml = '';
+      if (pokemon.item) {
+        const itemImgUrl = pokemon.item.sprite || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${pokemon.item.name}.png`;
+        const itemDesc = pokemon.item.loading ? 'กำลังโหลดข้อมูล...' : (pokemon.item.desc || '');
+        itemHtml = `
+          <div class="slot-item-container">
+            <div class="equipped-item" onclick="event.stopPropagation(); openItemPicker('${teamId}', ${i})">
+              <img src="${itemImgUrl}" alt="${pokemon.item.name}" onerror="this.style.display='none'" />
+              <div class="equipped-item-info">
+                <span class="equipped-item-name">${formatName(pokemon.item.name)}</span>
+                <span class="equipped-item-desc" title="${itemDesc}">${itemDesc}</span>
+              </div>
+              <button class="slot-remove" style="position:static;width:18px;height:18px;font-size:0.7rem;margin-left:auto;" onclick="event.stopPropagation(); removeItemFromPokemon('${teamId}', ${i})">✕</button>
+            </div>
+          </div>
+        `;
+      } else {
+        itemHtml = `
+          <div class="slot-item-container">
+            <button class="btn-add-item" onclick="event.stopPropagation(); openItemPicker('${teamId}', ${i})">+ เพิ่มไอเทม</button>
+          </div>
+        `;
+      }
+
       html += `
         <div class="team-slot filled" data-team="${teamId}" data-slot="${i}">
           <img class="slot-pokemon-img" src="${imgUrl}" alt="${pokemon.name}" />
@@ -651,6 +743,7 @@ function renderTeamSlots(teamId, container, team, slotCount) {
               ${pokemon.types.map(t => `<span class="type-badge type-${t}" style="font-size:0.6rem;padding:2px 6px;">${TYPE_NAMES_TH[t]}</span>`).join('')}
             </div>
           </div>
+          ${itemHtml}
           <button class="slot-remove" onclick="event.stopPropagation(); removeFromTeam('${teamId}', ${i})">✕</button>
         </div>`;
     } else {
@@ -663,9 +756,11 @@ function renderTeamSlots(teamId, container, team, slotCount) {
   }
   container.innerHTML = html;
 
-  // Add click handlers for filled slots
+  // Add click handlers for filled slots to swap/change pokemon
   container.querySelectorAll('.team-slot.filled').forEach(slot => {
-    slot.addEventListener('click', () => {
+    slot.addEventListener('click', (e) => {
+      // prevent triggering if clicked on item
+      if(e.target.closest('.slot-item-container') || e.target.closest('.slot-remove')) return;
       const t = slot.dataset.team;
       const s = parseInt(slot.dataset.slot);
       openTeamPicker(t, s);
@@ -712,10 +807,15 @@ async function selectPokemonForTeam(id) {
     id: data.id,
     name: data.name,
     types: data.types.map(t => t.type.name),
-    stats: data.stats.reduce((obj, s) => { obj[s.stat.name] = s.base_stat; return obj; }, {})
+    stats: data.stats.reduce((obj, s) => { obj[s.stat.name] = s.base_stat; return obj; }, {}),
+    item: null // Preserve previous item? Or reset. Reset makes sense for new pokemon.
   };
 
   const team = currentPickerTeam === 'A' ? teamA : teamB;
+  
+  // if slot had an item, maybe we keep it? Let's reset for now to avoid invalid items.
+  pokemon.item = team[currentPickerSlot]?.item || null;
+  
   team[currentPickerSlot] = pokemon;
 
   closeTeamPicker();
@@ -728,6 +828,93 @@ function removeFromTeam(teamId, slotIndex) {
   team[slotIndex] = null;
   initTeamSlots();
   analyzeTeams();
+}
+
+// ============ ITEM PICKER ============
+function openItemPicker(teamId, slotIndex) {
+  currentItemPickerTeam = teamId;
+  currentItemPickerSlot = slotIndex;
+  $itemPickerSearch.value = '';
+  $itemPickerModal.classList.add('open');
+  
+  // Hide loading and render
+  $itemLoadingContainer.style.display = 'none';
+  renderItemPickerGrid('');
+}
+
+function closeItemPicker() {
+  $itemPickerModal.classList.remove('open');
+  currentItemPickerTeam = null;
+  currentItemPickerSlot = null;
+}
+
+function renderItemPickerGrid(search) {
+  let filtered = allItems;
+  if (search) {
+    filtered = filtered.filter(item => item.name.includes(search));
+  }
+  // limit to 100 for performance
+  filtered = filtered.slice(0, 100);
+
+  if (filtered.length === 0) {
+    $itemPickerGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;">ไม่พบไอเทม</div>';
+    return;
+  }
+
+  $itemPickerGrid.innerHTML = filtered.map(item => {
+    const itemImgUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${item.name}.png`;
+    return `
+      <div class="picker-item" onclick="selectItemForPokemon('${item.name}')">
+        <img src="${itemImgUrl}" alt="${item.name}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>❓</text></svg>'" />
+        <span>${formatName(item.name)}</span>
+      </div>`;
+  }).join('');
+}
+
+async function selectItemForPokemon(itemName) {
+  closeItemPicker();
+  
+  const team = currentItemPickerTeam === 'A' ? teamA : teamB;
+  if (!team[currentItemPickerSlot]) return;
+
+  // Set loading state
+  team[currentItemPickerSlot].item = { name: itemName, loading: true };
+  initTeamSlots();
+
+  try {
+    const res = await fetch(`${POKEAPI_BASE}/item/${itemName}`);
+    const data = await res.json();
+    
+    let desc = '';
+    // Find latest english flavor text (often Gen 9/8)
+    // Flavor text entries are usually ordered, we can reverse it or just find the first 'en'
+    const engEntries = data.flavor_text_entries.filter(f => f.language.name === 'en');
+    if (engEntries.length > 0) {
+      desc = engEntries[engEntries.length - 1].text.replace(/\f|\n/g, ' '); // Get the most recent game's text
+    } else if (data.effect_entries && data.effect_entries.length > 0) {
+      const effect = data.effect_entries.find(e => e.language.name === 'en');
+      if (effect) desc = effect.short_effect;
+    }
+
+    team[currentItemPickerSlot].item = { 
+      name: itemName,
+      desc: desc || 'No description available.',
+      sprite: data.sprites.default
+    };
+  } catch (err) {
+    console.error('Error fetching item detail:', err);
+    team[currentItemPickerSlot].item = { name: itemName, desc: 'Error loading data.' };
+  }
+
+  initTeamSlots();
+}
+
+function removeItemFromPokemon(teamId, slotIndex) {
+  const team = teamId === 'A' ? teamA : teamB;
+  if (team[slotIndex]) {
+    team[slotIndex].item = null;
+  }
+  initTeamSlots();
 }
 
 // ============ TEAM ANALYSIS ============
@@ -897,7 +1084,187 @@ function animateCounter(element, target) {
   }, 30);
 }
 
+// ============ ITEMS DATABASE ============
+function filterAndDisplayItems() {
+  const search = $itemsSearchInput.value.toLowerCase().trim();
+  if (search) {
+    displayedItems = allItems.filter(i => i.name.includes(search));
+  } else {
+    displayedItems = allItems;
+  }
+  itemsCurrentPage = 0;
+  renderItemsPage();
+}
+
+function renderItemsPage() {
+  const ITEMS_PER_PAGE = 30;
+  const start = itemsCurrentPage * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE;
+  const pageItems = displayedItems.slice(start, end);
+
+  $itemsGrid.innerHTML = pageItems.map(item => {
+    const imgUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${item.name}.png`;
+    return `
+      <div class="pokemon-card" onclick="alert('ไอเทม: ${formatName(item.name)}')">
+        <img class="pokemon-card-img" src="${imgUrl}" alt="${item.name}" loading="lazy" onerror="this.style.opacity='0.2'" />
+        <h3 class="pokemon-card-name">${formatName(item.name)}</h3>
+      </div>
+    `;
+  }).join('');
+
+  $itemsCurrentPage.textContent = itemsCurrentPage + 1;
+  $itemsPrevBtn.disabled = itemsCurrentPage === 0;
+  $itemsNextBtn.disabled = end >= displayedItems.length;
+}
+
+$itemsSearchInput.addEventListener('input', debounce(filterAndDisplayItems, 300));
+$itemsPrevBtn.addEventListener('click', () => { if (itemsCurrentPage > 0) { itemsCurrentPage--; renderItemsPage(); } });
+$itemsNextBtn.addEventListener('click', () => { itemsCurrentPage++; renderItemsPage(); });
+
+
+// ============ META TIER LIST ============
+const metaList = ['incineroar', 'flutter-mane', 'ogerpon', 'urshifu-rapid-strike', 'rillaboom', 'tornadus-therian', 'amoonguss', 'gholdengo'];
+function renderMetaTier() {
+  $metaTierGrid.innerHTML = '';
+  metaList.forEach((name, index) => {
+    const poke = allPokemon.find(p => p.name === name);
+    if (!poke) return;
+    const imgUrl = `${POKEMON_IMG_BASE}${poke.id}.png`;
+    $metaTierGrid.innerHTML += `
+      <div class="pokemon-card meta-tier-card ${index < 3 ? 'tier-1' : 'tier-2'}" onclick="openPokemonModal(${poke.id})">
+        <span style="position:absolute; top:5px; left:5px; background:var(--accent-primary); padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold;">Rank #${index + 1}</span>
+        <img class="pokemon-card-img" src="${imgUrl}" alt="${poke.name}" loading="lazy" />
+        <h3 class="pokemon-card-name" style="margin-top:10px;">${formatName(poke.name)}</h3>
+      </div>
+    `;
+  });
+}
+
+// ============ DAMAGE CALCULATOR ============
+function populateDamageCalcDropdowns() {
+  const getOptions = () => {
+    let html = '<option value="">-- เลือกโปเกมอนจากทีม --</option>';
+    teamA.forEach((p, i) => { if (p) html += `<option value="A-${i}">[Team A] ${formatName(p.name)}</option>`; });
+    teamB.forEach((p, i) => { if (p) html += `<option value="B-${i}">[Team B] ${formatName(p.name)}</option>`; });
+    return html;
+  };
+  
+  const currentAttacker = $calcAttacker.value;
+  const currentDefender = $calcDefender.value;
+  
+  $calcAttacker.innerHTML = getOptions();
+  $calcDefender.innerHTML = getOptions();
+  
+  $calcAttacker.value = currentAttacker;
+  $calcDefender.value = currentDefender;
+}
+
+$btnCalculate.addEventListener('click', () => {
+  if (!$calcAttacker.value || !$calcDefender.value || !$calcMovePower.value) {
+    alert("กรุณาเลือกฝ่ายโจมตี ฝ่ายตั้งรับ และระบุความแรงท่า (Base Power)");
+    return;
+  }
+  
+  const getPoke = (val) => {
+    const [team, idx] = val.split('-');
+    return team === 'A' ? teamA[idx] : teamB[idx];
+  };
+
+  const attacker = getPoke($calcAttacker.value);
+  const defender = getPoke($calcDefender.value);
+  const power = parseInt($calcMovePower.value);
+  const moveType = $calcMoveType.value;
+
+  if (!attacker || !defender) return;
+
+  // Simplified Gen 9 Damage Formula (Level 50)
+  // Level 50 -> (2 * 50 / 5 + 2) = 22
+  const level = 50;
+  
+  const A = attacker.stats.attack;
+  const D = defender.stats.defense;
+
+  let baseDamage = (((22 * power * (A / D)) / 50) + 2);
+
+  // STAB
+  const isStab = attacker.types.includes(moveType);
+  if (isStab) baseDamage *= 1.5;
+
+  // Type Effectiveness
+  let typeMultiplier = 1;
+  defender.types.forEach(t => {
+    typeMultiplier *= getEffectiveness(moveType, t);
+  });
+  baseDamage *= typeMultiplier;
+
+  // Random factor 0.85 to 1.00
+  const minDamage = Math.floor(baseDamage * 0.85);
+  const maxDamage = Math.floor(baseDamage * 1.00);
+
+  // Estimate HP (Base * 2 + 31 + (0/4) + 50 + 10) -> Approx Base*2 + 91
+  const estimatedHp = (defender.stats.hp * 2) + 91;
+
+  const minPct = Math.min(100, Math.max(0, Math.floor((minDamage / estimatedHp) * 100)));
+  const maxPct = Math.min(100, Math.max(0, Math.floor((maxDamage / estimatedHp) * 100)));
+
+  $calcResult.style.display = 'block';
+  $calcResultText.textContent = `ดาเมจโดยประมาณ: ${minPct}% - ${maxPct}%`;
+  
+  let hpRemain = Math.max(0, 100 - maxPct);
+  $calcHpBar.style.width = `${hpRemain}%`;
+  if (hpRemain > 50) $calcHpBar.style.backgroundColor = '#10b981';
+  else if (hpRemain > 20) $calcHpBar.style.backgroundColor = '#f59e0b';
+  else $calcHpBar.style.backgroundColor = '#ef4444';
+  
+  if (typeMultiplier >= 2) $calcResultText.textContent += " (Super Effective!)";
+  if (typeMultiplier < 1 && typeMultiplier > 0) $calcResultText.textContent += " (Not very effective...)";
+  if (typeMultiplier === 0) $calcResultText.textContent += " (No effect!)";
+});
+
+// ============ SPEED TIERS ============
+function renderSpeedTiers() {
+  const allSelected = [];
+  
+  teamA.forEach(p => {
+    if (p) {
+      // Max Speed Calc @ Lvl 50: (Base * 2 + 31 + 63) * 1.1 + 5 = Math.floor((Base * 2 + 94) * 1.1) + 5
+      const maxSpeed = Math.floor(((p.stats.speed * 2) + 94) * 1.1) + 5;
+      allSelected.push({ team: 'A', name: p.name, id: p.id, base: p.stats.speed, max: maxSpeed });
+    }
+  });
+  teamB.forEach(p => {
+    if (p) {
+      const maxSpeed = Math.floor(((p.stats.speed * 2) + 94) * 1.1) + 5;
+      allSelected.push({ team: 'B', name: p.name, id: p.id, base: p.stats.speed, max: maxSpeed });
+    }
+  });
+
+  allSelected.sort((a, b) => b.max - a.max);
+
+  $speedTiersBody.innerHTML = allSelected.map(p => {
+    const imgUrl = `${POKEMON_IMG_BASE}${p.id}.png`;
+    const dotColor = p.team === 'A' ? 'team-dot-blue' : 'team-dot-red';
+    return `
+      <tr>
+        <td><div class="team-color-dot ${dotColor}"></div> Team ${p.team}</td>
+        <td>
+          <div class="speed-pkmn">
+            <img src="${imgUrl}" alt="${p.name}" />
+            <span>${formatName(p.name)}</span>
+          </div>
+        </td>
+        <td class="speed-val">${p.base}</td>
+        <td class="speed-val" style="color:var(--accent-primary); font-weight:bold;">${p.max}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+
 // Make openTeamPicker globally accessible
 window.openTeamPicker = openTeamPicker;
 window.selectPokemonForTeam = selectPokemonForTeam;
 window.removeFromTeam = removeFromTeam;
+window.openItemPicker = openItemPicker;
+window.selectItemForPokemon = selectItemForPokemon;
+window.removeItemFromPokemon = removeItemFromPokemon;

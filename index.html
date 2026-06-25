@@ -29,27 +29,33 @@
         <a href="#pokedex" class="nav-link active" data-section="pokedex">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="22"/></svg>
           Pokédex
-        </a>
-        <a href="#team-builder" class="nav-link" data-section="team-builder">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          จัดทีม
-        </a>
-        <a href="#type-chart" class="nav-link" data-section="type-chart">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
-          ตารางแพ้ทาง
-        </a>
+      <!-- Desktop Nav -->
+      <div class="nav-links" id="navbar">
+        <a href="#" class="nav-item active" data-target="pokedex">📖 Pokédex</a>
+        <a href="#" class="nav-item" data-target="itemsList">🎒 Items List</a>
+        <a href="#" class="nav-item" data-target="metaTier">🏆 Meta Tier</a>
+        <a href="#" class="nav-item" data-target="teamBuilder">⚔️ Team Builder</a>
+        <a href="#" class="nav-item" data-target="damageCalc">💥 Damage Calc</a>
+        <a href="#" class="nav-item" data-target="speedTiers">⚡ Speed Tiers</a>
+        <a href="#" class="nav-item" data-target="typeChart">🛡️ Type Chart</a>
       </div>
-      <button class="nav-mobile-toggle" id="mobileToggle" aria-label="Toggle menu">
+
+      <!-- Mobile Nav Toggle -->
+      <button class="nav-mobile-toggle" id="mobileToggle" aria-label="Menu">
         <span></span><span></span><span></span>
       </button>
     </div>
   </nav>
 
-  <!-- Mobile Navigation -->
+  <!-- Mobile Nav Menu -->
   <div class="mobile-nav" id="mobileNav">
-    <a href="#pokedex" class="mobile-nav-link" data-section="pokedex">Pokédex</a>
-    <a href="#team-builder" class="mobile-nav-link" data-section="team-builder">จัดทีม</a>
-    <a href="#type-chart" class="mobile-nav-link" data-section="type-chart">ตารางแพ้ทาง</a>
+    <a href="#" class="nav-item active" data-target="pokedex">📖 Pokédex</a>
+    <a href="#" class="nav-item" data-target="itemsList">🎒 Items List</a>
+    <a href="#" class="nav-item" data-target="metaTier">🏆 Meta Tier</a>
+    <a href="#" class="nav-item" data-target="teamBuilder">⚔️ Team Builder</a>
+    <a href="#" class="nav-item" data-target="damageCalc">💥 Damage Calc</a>
+    <a href="#" class="nav-item" data-target="speedTiers">⚡ Speed Tiers</a>
+    <a href="#" class="nav-item" data-target="typeChart">🛡️ Type Chart</a>
   </div>
 
   <!-- Hero Section -->
@@ -151,21 +157,7 @@
       <div class="section-header">
         <span class="section-badge">⚔️ Battle</span>
         <h2 class="section-title">จัดทีมแบตเทิล</h2>
-        <p class="section-subtitle">เลือกโหมด 1v1 หรือ 2v2 แล้วสร้างทีมที่แข็งแกร่งที่สุด</p>
-      </div>
-
-      <!-- Mode Selector -->
-      <div class="mode-selector">
-        <button class="mode-btn active" data-mode="1v1" id="mode1v1">
-          <span class="mode-icon">⚡</span>
-          <span class="mode-label">1 vs 1</span>
-          <span class="mode-desc">แบตเทิลตัวต่อตัว</span>
-        </button>
-        <button class="mode-btn" data-mode="2v2" id="mode2v2">
-          <span class="mode-icon">🔥</span>
-          <span class="mode-label">2 vs 2</span>
-          <span class="mode-desc">แบตเทิลคู่</span>
-        </button>
+        <p class="section-subtitle">สร้างทีมโปเกมอนที่แข็งแกร่งที่สุด 6 ตัว พร้อมเลือกไอเทมสวมใส่</p>
       </div>
 
       <!-- Team Slots -->
@@ -256,6 +248,139 @@
     </div>
   </div>
 
+  <!-- ================= ITEMS LIST SECTION ================= -->
+  <section id="itemsList" class="section" style="display: none;">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">🎒 Items</span>
+        <h2 class="section-title">ฐานข้อมูลไอเทม</h2>
+        <p class="section-subtitle">ค้นหาและดูความสามารถของไอเทมทั้งหมด</p>
+      </div>
+
+      <div class="search-bar">
+        <input type="text" id="itemsSearchInput" class="search-input" placeholder="ค้นหาชื่อไอเทม (ภาษาอังกฤษ)..." autocomplete="off" />
+      </div>
+
+      <div id="itemsGrid" class="pokemon-grid">
+        <!-- items will be rendered here -->
+      </div>
+      
+      <div class="pagination">
+        <button class="btn btn-secondary" id="itemsPrevBtn" disabled>« หน้าก่อนหน้า</button>
+        <span class="page-info">หน้า <span id="itemsCurrentPage">1</span></span>
+        <button class="btn btn-primary" id="itemsNextBtn">หน้าถัดไป »</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= META TIER SECTION ================= -->
+  <section id="metaTier" class="section" style="display: none;">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">🏆 Rankings</span>
+        <h2 class="section-title">โปเกมอนยอดฮิต (Meta Tier List)</h2>
+        <p class="section-subtitle">รายชื่อโปเกมอนที่นิยมใช้ในการแข่งขัน อ้างอิงจากข้อมูลล่าสุด</p>
+      </div>
+
+      <div id="metaTierGrid" class="pokemon-grid">
+        <!-- Meta pokemon will be rendered here -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DAMAGE CALC SECTION ================= -->
+  <section id="damageCalc" class="section" style="display: none;">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">💥 Calculator</span>
+        <h2 class="section-title">เครื่องคิดเลขคำนวณดาเมจ</h2>
+        <p class="section-subtitle">คำนวณความเสียหายโดยประมาณระหว่างโปเกมอนในทีมที่จัดไว้</p>
+      </div>
+
+      <div class="calc-container">
+        <div class="calc-row">
+          <div class="calc-box attacker-box">
+            <h3>ฝ่ายโจมตี (Attacker)</h3>
+            <select id="calcAttacker" class="filter-select">
+              <option value="">-- เลือกโปเกมอนจากทีม --</option>
+            </select>
+          </div>
+          <div class="calc-vs">VS</div>
+          <div class="calc-box defender-box">
+            <h3>ฝ่ายตั้งรับ (Defender)</h3>
+            <select id="calcDefender" class="filter-select">
+              <option value="">-- เลือกโปเกมอนจากทีม --</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="calc-move-box">
+          <h3>ข้อมูลท่าโจมตี (Move Data)</h3>
+          <div class="calc-move-inputs">
+            <input type="number" id="calcMovePower" class="search-input" placeholder="ความแรงท่า (Base Power) เช่น 90" min="10" max="250" />
+            <select id="calcMoveType" class="filter-select">
+              <option value="normal">Normal</option>
+              <option value="fire">Fire</option>
+              <option value="water">Water</option>
+              <option value="electric">Electric</option>
+              <option value="grass">Grass</option>
+              <option value="ice">Ice</option>
+              <option value="fighting">Fighting</option>
+              <option value="poison">Poison</option>
+              <option value="ground">Ground</option>
+              <option value="flying">Flying</option>
+              <option value="psychic">Psychic</option>
+              <option value="bug">Bug</option>
+              <option value="rock">Rock</option>
+              <option value="ghost">Ghost</option>
+              <option value="dragon">Dragon</option>
+              <option value="dark">Dark</option>
+              <option value="steel">Steel</option>
+              <option value="fairy">Fairy</option>
+            </select>
+          </div>
+          <div style="text-align:center; margin-top: 20px;">
+            <button id="btnCalculate" class="btn btn-primary" style="padding: 12px 32px; font-size: 1.1rem;">💥 คำนวณดาเมจ</button>
+          </div>
+        </div>
+
+        <div id="calcResult" class="calc-result" style="display: none;">
+          <h4>ผลการคำนวณ</h4>
+          <p id="calcResultText">ดาเมจโดยประมาณ: 0% - 0%</p>
+          <div class="calc-hp-bar-bg"><div class="calc-hp-bar" id="calcHpBar"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SPEED TIERS SECTION ================= -->
+  <section id="speedTiers" class="section" style="display: none;">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">⚡ Speed</span>
+        <h2 class="section-title">ตารางเปรียบเทียบความเร็ว</h2>
+        <p class="section-subtitle">ลำดับการโจมตีของโปเกมอนในทีมของคุณ (ใครเร็วกว่าได้ตีก่อน)</p>
+      </div>
+
+      <div class="speed-tiers-container">
+        <table class="speed-table">
+          <thead>
+            <tr>
+              <th>ทีม</th>
+              <th>โปเกมอน</th>
+              <th>Base Speed</th>
+              <th>ลูปความเร็วสูงสุด (Max Speed)</th>
+            </tr>
+          </thead>
+          <tbody id="speedTiersBody">
+            <!-- Speed rows rendered here -->
+          </tbody>
+        </table>
+        <p style="text-align:center; margin-top:20px; color:var(--text-muted); font-size:0.8rem;">* หมายเหตุ: Max Speed คำนวณจาก IV 31, EV 252, และ Nature บวกความเร็ว ที่เลเวล 50</p>
+      </div>
+    </div>
+  </section>
+
   <!-- Team Picker Modal -->
   <div class="modal-overlay" id="teamPickerModal">
     <div class="modal-content modal-picker">
@@ -265,6 +390,27 @@
         <input type="text" id="pickerSearch" class="search-input" placeholder="ค้นหาชื่อโปเกมอน..." autocomplete="off" />
       </div>
       <div class="picker-grid" id="pickerGrid"></div>
+    </div>
+  </div>
+
+  <!-- Item Picker Modal -->
+  <div class="modal-overlay" id="itemPickerModal">
+    <div class="modal-content modal-picker">
+      <button class="modal-close" id="itemPickerClose" aria-label="Close">&times;</button>
+      <h3 class="picker-title">เลือกไอเทม / หินเมก้า</h3>
+      <div class="picker-search">
+        <input type="text" id="itemPickerSearch" class="search-input" placeholder="ค้นหาไอเทม (ภาษาอังกฤษ)..." autocomplete="off" />
+      </div>
+      <div class="picker-grid" id="itemPickerGrid">
+        <div class="loading-container" id="itemLoadingContainer">
+          <div class="pokeball-spinner">
+            <div class="pokeball-spin-top"></div>
+            <div class="pokeball-spin-center"></div>
+            <div class="pokeball-spin-bottom"></div>
+          </div>
+          <p class="loading-text">กำลังโหลดข้อมูลไอเทม...</p>
+        </div>
+      </div>
     </div>
   </div>
 
